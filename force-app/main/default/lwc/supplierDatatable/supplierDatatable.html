@@ -1,0 +1,247 @@
+<!--
+* 
+* @ Name    :   supplierDatatable
+* @ Purpose :   The component allows users to select warehouse, a product, and a quote status respectively,helps to create quotes and quote lines and also displays information related to the uploaded file with the associated quote and helps to place an order.    
+* @ Author  :   Srikanth,Hima Bindu,Manogna,Kumar Sai
+*
+*   Date            |  Developer Name                 |  Version      |  Changes
+* ======================================================================================================
+*   26-12-2022      |  manogna.koppula@absyz.com      |  1.0          |  Initial Version
+*                      himabindu.vanaparthi@absyz.com
+*                      srikanth.halavath@absyz.com
+*                      kumarsai.vadapalli@absyz.com
+*
+-->
+<template>
+  <lightning-card>
+        <lightning-combobox
+        name="Warehouse"
+        label="Warehouse"
+        value={Value}
+        options={list_WarehouseNameOptions}
+        onchange={handleWarehouseChange}
+        field-level-help="Select a Warehouse from which you want to check the product"
+        style="width:200px;" 
+        class="slds-align_absolute-center"></lightning-combobox>
+        
+        
+        <template  if:true={blnIsShowProductCombobox} > 
+          <lightning-combobox
+          name="Product Name"
+          label="Product Name"
+          value={Value}
+          options={list_ProductNameFilter}
+          onchange={handleProductChange}
+          field-level-help="Select a Product in this particular Warehouse"
+          style="width:200px;"
+          class="slds-align_absolute-center"></lightning-combobox>
+        </template>
+        
+        <template  if:true={blnIsShowQuoteStatus} > 
+          <lightning-combobox
+          name="Select Quote Status"
+          label="Select Quote Status"
+          value={strQuoteStatusValue}
+          options={QuoteStatusOptions}
+          onchange={handleQuoteChange}
+          field-level-help="Select the quote status"
+          style="width:200px;"
+          class="slds-align_absolute-center"></lightning-combobox>
+        </template>
+        
+        <template  if:true={blnShowAccordion} >
+          <lightning-accordion
+          allow-multiple-sections-open
+          active-section-name={strSection}
+          onsectiontoggle={handleSectionToggle}>
+          <template for:each={list_SupplierNameFilter} for:item="suppliername" for:index="index">
+            <div class="slds-p-left_small" key={suppliername}>  
+              <lightning-accordion-section name={suppliername} label={suppliername}>
+                <div class="c-container">
+                  <lightning-layout horizontal-align="spread">
+                    <lightning-layout-item flexibility="auto" padding="around-small">
+                      Product : <a     onclick={NavigatetoProduct}  target="_blank">{strproductChange}</a>
+                    </lightning-layout-item>
+                    <template  if:true={blnIsShowButtons} >
+                    <lightning-layout-item flexibility="auto" padding="around-small">
+                      <lightning-button variant="destructive" label="Reject"  onclick={handlereject} class="slds-m-left_x-small" ></lightning-button>
+                    </lightning-layout-item>
+                  </template>
+                  </lightning-layout>
+                </div>
+                <template if:true={blnIsShowQuoteLineItems}> 
+                  <lightning-card>
+                    <div class="slds-box slds-theme_default">
+                      <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+                        <thead>
+                          <tr>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="Product Name">Quote Number</div>
+                            </th>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="Product Name">Quote Line Number</div>
+                            </th>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="">List price</div>
+                            </th>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="">Sales price</div>
+                            </th>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="">Quantity</div>
+                            </th>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="">Discount</div>
+                            </th>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="">Delivery Date</div>
+                            </th>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="">Description</div>
+                            </th>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="">Total Price</div>
+                            </th>
+                            <template  if:true={blnIsShowButtons} >
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title=""></div>
+                            </th>
+                          </template>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="">  View Documents</div>
+                            </th>
+                            <template  if:true={blnIsShowButtons} >
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="Revise"></div>
+                            </th>
+                          </template>
+                            <th class="" scope="col">
+                              <div class="slds-truncate" title="">Finalised Price</div>
+                            </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <template for:each={list_PFQuoteLineItemsList} for:item="PFQL">
+                              <tr key={PFQL.Id}>
+                                <td><a  name={PFQL.Id}  data-strquoteid={PFQL.Quote.Id} onclick={Navigatetoquotenumber}  target="_blank">{PFQL.Quote.QuoteNumber}</a></td>
+                                <td><a  name={PFQL.Id}  data-strquotelineid={PFQL.Id} onclick={Navigatetoquotelinenumber}  target="_blank">{PFQL.LineNumber}</a></td>
+                                <td>{PFQL.ListPrice}</td>
+                                <td>            <lightning-input type="text"  value={PFQL.UnitPrice} class="lgtinput slds-p-bottom_medium" disabled={PFQL.blnDisabled} onchange={handlesalesprice} ></lightning-input>
+                                </td>
+                            
+                                <td>            <lightning-input type="text" label="" value={PFQL.Quantity} class="lgtinput slds-p-bottom_medium" disabled={PFQL.blnDisabled} onchange={handlequantity} ></lightning-input>
+                                </td>
+                                <td>            <lightning-input type="text" label="" value={PFQL.Discount} class="lgtinput slds-p-bottom_medium" disabled={PFQL.blnDisabled} onchange={handlediscount} ></lightning-input>
+                                </td>
+                                <td>            <lightning-input type="date" label="" value={PFQL.Quote.Expected_delivery_date__c} class="lgtinput slds-p-bottom_medium" disabled={PFQL.blnDisabled} onchange={handleDeliveryDate} ></lightning-input>
+                                </td>
+                                <td>            <lightning-input type="text" label="" value={PFQL.Description} class="lgtinput slds-p-bottom_medium" disabled={PFQL.blnDisabled} onchange={handledescription} ></lightning-input>
+                                </td>
+                                <td>{PFQL.TotalPrice}</td>
+                                <template  if:true={blnIsShowButtons} >
+                                <td><lightning-button variant="brand" label="Update"  data-qlid={PFQL.Id} data-revisecheck={PFQL.Quote.Previous_Quote__c} disabled={PFQL.blnDisabled} data-quantity={PFQL.Quantity} data-discount={PFQL.Discount} data-description={PFQL.Description} data-deliverydate={PFQL.Quote.Expected_delivery_date__c}  data-salesprice={PFQL.UnitPrice}  onclick={handleupdate} data-qid={PFQL.QuoteId} class="slds-m-left_x-small"></lightning-button> </td>
+                              </template>
+                                <td> <lightning-icon icon-name="utility:preview" alternative-text="Preview"  onclick={handlepdfids} data-qid={PFQL.QuoteId}></lightning-icon>  </td>
+                                  <template  if:true={blnIsShowButtons} >
+                                  <td><lightning-button variant="destructive-text" label="Revise" data-strquoteid={PFQL.Quote.Id} disabled={PFQL.blnDisabled} data-revisecheck={PFQL.Quote.Previous_Quote__c} data-qid={PFQL.QuoteId} onclick={handlerevise} class="slds-m-left_x-small"></lightning-button> </td>
+                                </template>
+                                <template  if:true={blnIsShowButtons}>
+                                  <td><lightning-input type="checkbox" name='finalise' class="slds-p-left_xx-large" data-quoteid={PFQL.QuoteId} onchange={handleInputChange1} ></lightning-input> </td>
+                                </template>
+                                <template  if:true={blnshowFinalisedColumn}>
+                                  <td>{PFQL.FinalisedValue}</td> 
+                                </template>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>   
+                    </lightning-card>
+                  <template  if:true={blnIsShowButtons} >
+                    <lightning-button variant="Brand" label="Place Order"  onclick={HandlePlaceOrder} class="slds-align_absolute-center" ></lightning-button>
+                  </template>
+                </template>
+                </lightning-accordion-section> 
+              </div>
+            </template>
+          </lightning-accordion>
+        </template>
+      </lightning-card>  
+      <template if:true={blnIsShowModal}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+          <div class="slds-modal__container">
+            <header class="slds-modal__header">
+              <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={hideModalBox}>
+                <lightning-icon icon-name="utility:close"
+                alternative-text="close"
+                variant="inverse"
+                size="small" ></lightning-icon>
+                <span class="slds-assistive-text">Close</span>
+              </button>
+              <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Create Quote line items</h2>
+            </header>            
+            <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+              <lightning-layout>
+                <lightning-layout-item padding="around-small">
+                  <p class="slds-p-around_small">Quote Number : <a  name={storequoteid}   onclick={RecordPage}  target="_blank"> {StrQuoteId}</a></p>
+                  <p class="slds-p-around_small">Product : {strproductChange}</p> 
+                  <p class="slds-p-around_small">Warehouse : {strWarehouseChange}</p> 
+                  <lightning-input type="text" name='Quantity' label="Enter Quantity"  class="slds-p-around_x-small" onchange={handleInputChange1}></lightning-input>
+                  <lightning-input type="text" name='SalesPrice' label="Enter Sales Price" class="slds-p-around_x-small" onchange={handleInputChange1}></lightning-input>
+                </lightning-layout-item>
+                <lightning-layout-item padding="around-small">
+                  <lightning-input type="text" name='Discount' label="Discount" class="slds-p-around_x-small" onchange={handleInputChange1}></lightning-input>
+                  <lightning-input type="text" name='Line Item Description' label="Line Item Description" class="slds-p-around_x-small" onchange={handleInputChange1}></lightning-input>
+                </lightning-layout-item>
+              </lightning-layout>
+            </div>
+            <footer class="slds-modal__footer">
+              <lightning-button variant="Success" label="Create" title="Primary action" onclick={HandleCreateQLI} class="slds-m-left_x-small"></lightning-button>  </footer>
+            </div>
+          </section>
+          <div class="slds-backdrop slds-backdrop_open"></div>
+        </template> 
+        <template if:true={blnIsShowPDFs}>
+          <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+              <header class="slds-modal__header">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={hideDocumentsPopUp}>
+                  <lightning-icon icon-name="utility:close"
+                  alternative-text="close"
+                  variant="inverse"
+                  size="small" onclick={closeModal}></lightning-icon>
+                  <span class="slds-assistive-text">Close</span>
+                </button>
+                <h2 id="modal-heading-001" class="slds-text-heading_medium slds-hyphenate">Quote PDFs Preview</h2>
+              </header>              
+              <div style="height:25px;">
+                <lightning-card >
+                  <template if:true={blnshowMessage}> 
+                    <div class="slds-align_absolute-center" style="height:5rem">{strMessage}</div>
+                  </template>
+                  <template for:each={list_FilesList} for:item="file">
+                      <div key={file.value} class="slds-box">
+                        <lightning-layout>
+                          <lightning-layout-item size="4"> 
+                            <p>{file.label}</p>
+                         </lightning-layout-item>
+                          <lightning-layout-item size="8">
+                            <lightning-button label="Preview" 
+                            variant="brand"
+                           data-id={file.value}
+                           onclick={previewHandler}
+                           class="slds-float_right"
+                            ></lightning-button> 
+                        </lightning-layout-item>
+                      </lightning-layout>
+                      </div>
+                  </template>
+             </lightning-card>
+              </div>              
+              <footer class="slds-modal__footer">
+                 </footer>
+              </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+          </template>   
+      </template>
